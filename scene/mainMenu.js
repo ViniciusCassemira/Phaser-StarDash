@@ -8,12 +8,9 @@ export default class MainMenu extends Phaser.Scene {
     }
 
     create() {
-        this.add.text(10, 430, 'Star dash v1.0', { fontSize: '32px', fill: '#fff' });
+        this.add.text(10, 430, 'Star dash v1.1', { fontSize: '32px', fill: '#fff' });
         this.add.text(10, 470, 'Press enter to start');
         this.keyEnter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
-        // this.input.on('pointerdown', () => {
-        //     this.scene.start('GameScene');
-        // });
     }
 
     update(){

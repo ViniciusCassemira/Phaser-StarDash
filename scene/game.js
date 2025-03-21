@@ -7,26 +7,71 @@ export default class GameScene extends Phaser.Scene {
         this.load.image('bg', 'assets/bg.png');
         this.load.image('star', 'assets/star.png');
         this.load.image('bomb', 'assets/bomb.png');
-    }
+        
+        // this.load.spritesheet('person_down', 'assets/character_down.png', { frameWidth: 16, frameHeight: 16 });
+        // this.load.spritesheet('person_up', 'assets/character_up.png', { frameWidth: 16, frameHeight: 16 });
+        // this.load.spritesheet('person_right', 'assets/character_right.png', { frameWidth: 16, frameHeight: 16 });
+        // this.load.spritesheet('person_left', 'assets/character_left.png', { frameWidth: 16, frameHeight: 16 });
 
+        this.load.spritesheet('coin', 'assets/coin.png', { frameWidth: 75, frameHeight: 74 });
+        this.load.spritesheet('person', 'assets/character_base.png', { frameWidth: 16, frameHeight: 16 });
+    }
+    
     create() {
         this.add.image(250, 250, 'bg');
-        this.player = this.physics.add.sprite(200, 200, '');
+        // this.player = this.physics.add.sprite(200, 200, 'person_down');
+        this.player = this.physics.add.sprite(200, 200, 'person');
         this.player.setCollideWorldBounds(true);
-        this.player.setScale(1);
+        this.player.setScale(2);
+        this.playerVelocity = 160;
 
         this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         
-        // this.cursors = this.input.keyboard.createCursorKeys();
+        this.anims.create({
+            key: 'anim_coin',
+            frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 9 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'anim_left',
+            frames: this.anims.generateFrameNumbers('person', { start: 12, end: 15 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'anim_right',
+            frames: this.anims.generateFrameNumbers('person', { start: 8, end: 11 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'anim_up',
+            frames: this.anims.generateFrameNumbers('person', { start: 4, end: 7 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'anim_down',
+            frames: this.anims.generateFrameNumbers('person', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'anim_stoped',
+            frames: [ { key: 'person', frame: 5} ],
+            frameRate: 30,
+        });
 
         this.stars = this.physics.add.group({
             key: 'star',
             repeat: 2
         });
-
+        
         this.bombs= this.physics.add.group({
             key: 'star',
             repeat: 2
@@ -34,24 +79,27 @@ export default class GameScene extends Phaser.Scene {
 
         this.score = 0;
         this.scoreText = this.add.text(0, 0, "Score: 0", { fontSize: '16px' });
-
+        
         this.stars.children.iterate(function (child) {
             let randomX = Phaser.Math.Between(0, 500);
             let randomY = Phaser.Math.Between(0, 500);
             child.setPosition(randomX, randomY);
+            child.anims.play('anim_coin', true);
+            child.setScale(0.35);
         });
 
         this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this);
         this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
         this.physics.add.collider(this.bombs, this.bombs);
 
-        this.restartButton = document.getElementById("gameover-container");
-        document.getElementById("buttonRestart").addEventListener('click', () => {
-            this.restart();
-        });
+        // this.restartButton = document.getElementById("gameover-container");
+        // document.getElementById("buttonRestart").addEventListener('click', () => {
+        //     this.restart();
+        // });
 
         this.playerPosition = document.getElementById("player-position");
-
+        this.restartMessage = document.getElementById("restart-message");
+        this.restartMessage.innerText = "Press R to restart";
     }
 
     update() {
@@ -62,42 +110,54 @@ export default class GameScene extends Phaser.Scene {
         }
 
         if (this.gameOver) {
-            // this.restartButton.style.visibility = "visible";
+            document.getElementById('box').style.visibility= "hidden";
             this.restart();
             this.scene.start('GameOver')
-            // this.scene.start('MainMenu');
         } else {
-            this.restartButton.style.visibility = "hidden";
+            document.getElementById('box').style.visibility= "visible";
         }
 
+        const isMovingX = () => this.keyA.isDown || this.keyD.isDown;
+        const isMovingY = () => this.keyW.isDown || this.keyS.isDown;
+        // function isMovingX() {
+        //     return this.keyA.isDown || this.keyD.isDown;
+        // }
+        // function isMovingY() {
+        //     return this.keyW.isDown || this.keyS.isDown;
+        // }
+        // console.log('isMovingX:', isMovingX());
+
+
         if (this.keyA.isDown) {
-            this.player.setVelocityX(-160);
-        } else if (this.keyD.isDown) {
-            this.player.setVelocityX(160);
-        } else {
+            this.player.setVelocityX(-this.playerVelocity);
+        }else if (this.keyD.isDown) {
+            this.player.setVelocityX(this.playerVelocity);
+        }else{
             this.player.setVelocityX(0);
         }
-        if (this.keyW.isDown) {
-            this.player.setVelocityY(-160);
-        } else if (this.keyS.isDown) {
-            this.player.setVelocityY(160);
-        } else {
+
+        if(this.keyW.isDown) {
+            this.player.setVelocityY(-this.playerVelocity);
+        }else if (this.keyS.isDown) {
+            this.player.setVelocityY(this.playerVelocity);
+        }else{
             this.player.setVelocityY(0);
         }
-        // if (this.cursors.left.isDown) {
-        //     this.player.setVelocityX(-160);
-        // } else if (this.cursors.right.isDown) {
-        //     this.player.setVelocityX(160);
-        // } else {
-        //     this.player.setVelocityX(0);
-        // }
-        // if (this.cursors.up.isDown) {
-        //     this.player.setVelocityY(-160);
-        // } else if (this.cursors.down.isDown) {
-        //     this.player.setVelocityY(160);
-        // } else {
-        //     this.player.setVelocityY(0);
-        // }
+
+        if (isMovingX()) {
+            if (this.keyA.isDown) {
+                this.player.anims.play('anim_left', true);
+            } else if (this.keyD.isDown) {
+                this.player.anims.play('anim_right', true);
+            }
+        } else if (isMovingY()) {
+            if (this.keyW.isDown) {
+                this.player.anims.play('anim_up', true);
+            } else if (this.keyS.isDown) {
+                this.player.anims.play('anim_down', true);
+            }
+        }
+
     }
 
     collectStar(player, star) {
@@ -111,12 +171,23 @@ export default class GameScene extends Phaser.Scene {
         let randomX = Phaser.Math.Between(0, 500);
         let randomY = Phaser.Math.Between(0, 500);
 
-        this.stars.create(randomX, randomY, 'star');
+        let star = this.stars.create(randomX, randomY, 'coin');
+        star.setScale(0);
+        star.anims.play('anim_coin', true);
+
+        this.tweens.add({
+            targets: star,
+            scaleX: 0.35,
+            scaleY: 0.35,
+            duration: 500,
+            ease: 'Back.easeOut'
+        });
 
         if (this.score % 3 === 0) {
             this.createBomb();
         }
-    }
+    }   
+
 
     createBomb() {
         let randomX = this.player.x > 250 ? Phaser.Math.Between(0, 250) : Phaser.Math.Between(251, 500);

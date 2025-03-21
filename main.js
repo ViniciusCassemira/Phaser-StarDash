@@ -8,12 +8,16 @@ var config = {
     height: 500,
     parent:"game-container",
     physics: {
-    default: 'arcade',
-    arcade: {
-        debug: false
-    }
-},
-    scene: [MainMenu, GameScene, GameOver]
+        default: 'arcade',
+        arcade: {
+            debug: false
+        }
+    },
+    scene: [
+        MainMenu,
+        GameScene, 
+        GameOver
+    ]
 };
 
 const game = new Phaser.Game(config);
